@@ -13,16 +13,16 @@ import xarray as xr
 
 # branch = 'current'
 
-datasets = "CNRM-ESM2-1"
+datasets = "CRU-TS"
 # datasets = "MPI-ESM1-2-LR"
-p = "C:/Mew/Project/"
+p = "D:/GCM-CMIP6/"
 # folder_name = "./{}_{}/".format(datasets)
 folder_name = p + datasets
 ROOT = Path(folder_name)
 files = list(sorted(ROOT.glob("*")))
 
 # print(f'{datasets}_file')
-dst_folder = Path(f'{datasets}_h_file'.lower())
+dst_folder = Path(f'{datasets}_l_file'.lower())
 dst_folder.mkdir(parents=True, exist_ok=True)
 
 for file_name in os.listdir(folder_name):
@@ -35,13 +35,26 @@ for file_name in os.listdir(folder_name):
         # date = np.array(list(map(lambda x: (datetime.date.fromordinal(x) + relativedelta(years=1899)).strftime("%Y-%m-%d") ,time)))
         date = [function.gregorian2date(d) for d in f.date]
         date = np.array(date)
+
     elif f.mask == 'amip':
-        if f.index == 'pr':
-            ds = ds.resample(time='m').sum()
+        if f.dataset_name == 'EC-Earth3':
+            date = [function.gregorian2date1(d) for d in f.date]
+            date = np.array(date)
         else:
-            ds = ds.resample(time='m').mean()
-        date = [function.gregorian2date1(d) for d in f.date]
-        date = np.array(date)
+            if f.index == 'pr':
+                ds = ds.resample(time='m').sum()
+            else:
+                ds = ds.resample(time='m').mean()
+            date = [function.gregorian2date1(d) for d in f.date]
+            date = np.array(date)
+
+    # elif f.mask == 'amip':
+    #     if f.index == 'pr':
+    #         ds = ds.resample(time='m').sum()
+    #     else:
+    #         ds = ds.resample(time='m').mean()
+    #     date = [function.gregorian2date1(d) for d in f.date]
+    #     date = np.array(date)
 
     value_old = ds[f.time_var][:].data
     time = ds['time'][:].data
@@ -67,7 +80,7 @@ for file_name in os.listdir(folder_name):
     rangr_y = (int(date[-1][:4])-int(date[0][:4]))+1
 
     m, lat, lon = value.shape
-    down_size = 0
+    down_size = 4
 
     value = np.where(value > 1E20, np.nan, value)
 
